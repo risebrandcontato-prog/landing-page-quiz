@@ -505,7 +505,7 @@ function ResultView({ answers }: { answers: Record<string, string> }) {
       {/* CTA — ABAIXO DO TEXTO, ACIMA DOS GRÁFICOS */}
       <div className="flex flex-col items-center justify-center mb-8">
         <a
-          href="https://seu-app.vercel.app"
+          href="https://t.me/+ZvMy7g8TyExjN2Qx"
           target="_blank"
           rel="noreferrer"
           className="btn-primary inline-flex items-center justify-center gap-3 rounded-full px-7 sm:px-12 py-4 sm:py-5 text-sm sm:text-lg animate-pulse-ring w-full sm:w-auto"
