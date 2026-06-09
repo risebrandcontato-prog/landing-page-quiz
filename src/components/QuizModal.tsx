@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Flame, Trophy, Target, TrendingUp, Users, DollarSign, Sparkles,
@@ -286,29 +286,145 @@ export function QuizModal({ open, onClose }: { open: boolean; onClose: () => voi
   );
 }
 
+/* -------------- Live counter hook -------------- */
+function useLiveCounter() {
+  const [count, setCount] = useState(() => {
+    if (typeof window === "undefined") return 1230;
+    const saved = localStorage.getItem("quiz_counter");
+    const savedTime = localStorage.getItem("quiz_counter_time");
+    if (saved && savedTime) {
+      const elapsed = Math.floor((Date.now() - parseInt(savedTime)) / 3200);
+      let next = parseInt(saved) + elapsed;
+      while (next > 5000) next = 1230 + ((next - 1230) % (5000 - 1230 + 1));
+      if (next < 1230) next = 1230;
+      return next;
+    }
+    return 1230;
+  });
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCount((prev) => {
+        const next = prev >= 5000 ? 1230 : prev + 1;
+        localStorage.setItem("quiz_counter", String(next));
+        localStorage.setItem("quiz_counter_time", String(Date.now()));
+        return next;
+      });
+    }, 3200);
+    return () => clearInterval(interval);
+  }, []);
+
+  return count;
+}
+
+function fmt(n: number) {
+  return n.toLocaleString("pt-BR");
+}
+
 /* -------------- Live social proof -------------- */
 const NAMES = [
   "João S.", "Carlos M.", "Pedro R.", "Lucas A.", "Rafael T.", "Felipe O.",
   "Bruno C.", "Gabriel F.", "Matheus L.", "Diego P.", "Thiago V.", "André N.",
-  "Vinícius B.", "Rodrigo H.", "Eduardo K.", "Marcos D.",
+  "Vinícius B.", "Rodrigo H.", "Eduardo K.", "Marcos D.", "Fernando L.",
+  "Gustavo P.", "Henrique M.", "Igor S.", "Jorge C.", "Leandro A.", "Mário R.",
+  "Nathan T.", "Otávio V.", "Paulo B.", "Ricardo G.", "Samuel D.", "Tiago N.",
+  "Vitor H.", "Alexandre F.", "Daniel J.", "Elias W.", "Fabrício Q.", "Hugo E.",
+  "Ivan K.", "Júlio X.", "Kleber Z.", "Luan Y.", "Murilo U.", "Nicolas I.",
+  "Orlando O.", "Pablo P.", "Queiroz L.", "Roberto M.", "Silas C.", "Tales A.",
+  "Ugo S.", "Wagner T.", "Yuri R.", "Zeca B.", "Adriano V.", "Breno F.",
+  "César D.", "Davi G.", "Elton H.", "Fábio J.", "Gilberto K.", "Heitor L.",
+  "Ítalo N.", "Jonas M.", "Kaique P.", "Lázaro Q.", "Maicon S.", "Nelson T.",
+  "Osvaldo U.", "Patrick V.", "Renan W.", "Sérgio X.", "Tobias Y.", "Ulisses Z.",
+  "Valdir A.", "William B.", "Xande C.", "Yago D.", "Zé E.", "Alan F.", "Beto G.",
+  "Caio H.", "Dante I.", "Everton J.", "Flávio K.", "Giovani L.", "Hélio M.",
+  "Ismael N.", "Jadson O.", "Kleiton P.", "Léo Q.", "Marlon R.", "Naldo S.",
+  "Osmar T.", "Pericles U.", "Ramon V.", "Saulo W.", "Túlio X.", "Vagner Y.",
+  "Wesley Z.", "Xavier A.", "Yan B.", "Ziraldo C.", "Artur D.", "Baltazar E.",
+  "Ciro F.", "Dario G.", "Estevan H.", "Fred I.", "Geraldo J.", "Horácio K.",
+  "Inácio L.", "Jair M.", "Kiko N.", "Lindomar O.", "Mauro P.", "Narciso Q.",
+  "Oberdan R.", "Plínio S.", "Quintino T.", "Raul U.", "Sandro V.", "Tadeu W.",
+  "Ubirajara X.", "Vicente Y.", "Waldir Z.", "Abel A.", "Benício B.", "Calebe C.",
+  "Domingos D.", "Ernesto E.", "Firmino F.", "Genival G.", "Hermes H.", "Ivo I.",
+  "Joaquim J.", "Klaus K.", "Laerte L.", "Manoel M.", "Norberto N.", "Orestes O.",
+  "Procópio P.", "Quirino Q.", "Reginaldo R.", "Salvador S.", "Tarcísio T.",
+  "Urbano U.", "Valentim V.", "Waldemar W.", "Xisto X.", "Youssef Y.", "Zoroastro Z.",
+  "Alcides A.", "Bartolomeu B.", "Cassiano C.", "Dagoberto D.", "Eurico E.",
+  "Faustino F.", "Gustavo G.", "Humberto H.", "Irineu I.", "Jacinto J.", "Kleber K.",
+  "Lourenço L.", "Moisés M.", "Nestor N.", "Onofre O.", "Péricles P.", "Quincas Q.",
+  "Romildo R.", "Severino S.", "Tristão T.", "Ubaldo U.", "Venceslau V.", "Wilson W.",
+  "Xerxes X.", "Ygor Y.", "Zaqueu Z.", "Almir A.", "Bosco B.", "Cândido C.",
+  "Delfim D.", "Edivaldo E.", "Floriano F.", "Godofredo G.", "Hilário H.",
+  "Inocêncio I.", "Juvêncio J.", "Lino L.", "Márcio M.", "Nilo N.", "Pio P.",
+  "Querubim Q.", "Raimundo R.", "Sebastião S.", "Tibério T.", "Ugo U.", "Valdo V.",
+  "Wilmar W.", "Ximeno X.", "Zacarias Z.", "Amadeu A.", "Belarmino B.", "Cipriano C.",
+  "Damião D.", "Eliseu E.", "Fidélis F.", "Gerson G.", "Heriberto H.", "Isidoro I.",
+  "Josias J.", "Kadu K.", "Lauro L.", "Mamede M.", "Nicanor N.", "Pantaleão P.",
+  "Querubino Q.", "Rosendo R.", "Sinval S.", "Tércio T.", "Umbelino U.", "Vivaldo V.",
+  "Walter W.", "Xenofonte X.", "Zelito Z.", "Albino A.", "Benedicto B.", "Clemente C.",
+  "Dionísio D.", "Eusébio E.", "Félix F.", "Heraldo H.", "Isaias I.", "Jonas J.",
+  "Leopoldo L.", "Nabor N.", "Olegário O.", "Porfírio P.", "Quintiliano Q.", "Rosalvo R.",
+  "Salatiel S.", "Tarciso T.", "Valdemar V.", "Walmir W.", "Xandão X.", "Adão A.",
+  "Demétrio D.", "Eliézer E.", "Ferminiano F.", "Gedeão G.", "Hamilton H.", "Irenio I.",
+  "Jazer J.", "Kalebe K.", "Maciel M.", "Nahum N.", "Obadias O.", "Peregrino P.",
+  "Régis R.", "Saul S.", "Telmo T.", "Urias U.", "Valério V.", "Xenon X.", "Zoro Z.",
+  "Aarão A.", "Barnabé B.", "Calebe C.", "Dinarte D.", "Eliab E.", "Filemon F.",
+  "Gideão G.", "Isaque I.", "Jefté J.", "Kaleb K.", "Levi L.", "Micael M.", "Nadab N.",
+  "Obede O.", "Pedro P.", "Querubim Q.", "Rúben R.", "Simeão S.", "Tadeu T.", "Uriel U.",
+  "Valente V.", "Wesley W.", "Yonatan Y.", "Zabulon Z.", "Abelardo A.", "Cristóvão C.",
+  "Dário D.", "Emanuel E.", "Fernando F.", "Giovanni G.", "Horácio H.", "Ismael I.",
+  "Jeremias J.", "Kauã K.", "Lorenzo L.", "Miguel M.", "Natanael N.", "Otávio O.",
+  "Paulo P.", "Rodrigo R.", "Samuel S.", "Tomás T.", "Ulisses U.", "Vicente V.",
+  "Wellington W.", "Xavier X.", "Zaqueu Z.", "Abrahão A.", "Benjamim B.", "Caleb C.",
+  "Davi D.", "Efraim E.", "Filipe F.", "Gad G.", "Heber H.", "Josué J.", "Kainã K.",
+  "Lázaro L.", "Manassés M.", "Naim N.", "Peleg P.", "Raguel R.", "Saulo S.", "Tobias T.",
+  "Valdemiro V.", "Wanderley W.", "Adriel A.", "Boaz B.", "Eliezer E.", "Felipe F.",
+  "Gerson G.", "Heitor H.", "José J.", "Natan N.", "Oseias O.", "Rafael R.", "Simeão S.",
+  "Urias U.", "Yago Y.", "Abel A.", "Efraim E.", "Filipe F.", "Gad G.", "Heber H.",
+  "Josué J.", "Kainã K.", "Manassés M.", "Naim N.", "Peleg P.", "Raguel R.", "Saulo S.",
+  "Tobias T.", "Valdemiro V.", "Wanderley W.", "Adriel A.", "Boaz B.", "Eliezer E.",
+  "José J.", "Natan N.", "Oseias O.", "Rafael R.", "Simeão S.", "Urias U.", "Yago Y.",
 ];
-const CITIES = ["SP", "RJ", "BH", "POA", "CWB", "REC", "SSA", "FOR", "BSB", "MAN"];
+const CITIES = [
+  "SP", "RJ", "BH", "POA", "CWB", "REC", "SSA", "FOR", "BSB", "MAN",
+  "GOI", "VIX", "MCZ", "NAT", "JPA", "SLZ", "THE", "AJU", "CGR", "CGH",
+  "FLA", "BEL", "RBR", "PMW", "JOI", "LON", "MAR", "PET", "TER", "MAC",
+  "IMP", "SJP", "UBA", "ITU", "SOR", "RIO", "NIT", "CAB", "SAO", "CAM",
+  "OSK", "PIR", "ARA", "BAR", "JAC", "LIM", "TAU", "RIB", "PRES", "SJC",
+  "BOT", "SAN", "PAL", "COR", "FLU", "VAS", "GRE", "INT", "CRU", "ATL",
+  "AME", "CEA", "BAH", "CUI", "GOI", "VAS", "BOT", "SAN", "PAL", "COR",
+  "FLU", "VAS", "GRE", "INT", "CRU", "ATL", "AME", "CEA", "BAH", "CUI",
+];
 
 function LiveActivity({ compact }: { compact?: boolean }) {
-  const [idx, setIdx] = useState(0);
+  const count = useLiveCounter();
+  const lastIdxRef = useRef(-1);
+  const [person, setPerson] = useState(() => getRandomPerson(-1));
+
+  function getRandomPerson(excludeIdx: number) {
+    let idx: number;
+    do {
+      idx = Math.floor(Math.random() * NAMES.length);
+    } while (idx === excludeIdx && NAMES.length > 1);
+    lastIdxRef.current = idx;
+    const cityIdx = Math.floor(Math.random() * CITIES.length);
+    const ago = Math.floor(Math.random() * 9) + 1;
+    return { name: NAMES[idx], city: CITIES[cityIdx], ago, key: Date.now() };
+  }
+
   useEffect(() => {
-    const i = setInterval(() => setIdx((v) => v + 1), 3200);
+    const i = setInterval(() => {
+      setPerson(getRandomPerson(lastIdxRef.current));
+    }, 3200);
     return () => clearInterval(i);
   }, []);
-  const name = NAMES[idx % NAMES.length];
-  const city = CITIES[(idx + 3) % CITIES.length];
-  const ago = (idx % 9) + 1;
+
+  const { name, city, ago, key } = person;
 
   return (
     <div className={`mt-${compact ? 4 : 6} flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-5`}>
       <AnimatePresence mode="wait">
         <motion.div
-          key={idx}
+          key={key}
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
@@ -339,7 +455,7 @@ function LiveActivity({ compact }: { compact?: boolean }) {
           ))}
         </div>
         <span className="text-white/80">
-          <span className="font-bold text-emerald-400">+12.847</span> já fizeram o teste
+          <span className="font-bold text-emerald-400">+{fmt(count)}</span> já fizeram o teste
         </span>
       </div>
     </div>
@@ -348,6 +464,7 @@ function LiveActivity({ compact }: { compact?: boolean }) {
 
 /* -------------- Result -------------- */
 function ResultView({ answers }: { answers: Record<string, string> }) {
+  const count = useLiveCounter();
   const filled = Object.keys(answers).length;
   const score = Math.min(99, 82 + filled * 2);
   const radial = [{ name: "Score", value: score, fill: "#00ff88" }];
@@ -411,7 +528,7 @@ function ResultView({ answers }: { answers: Record<string, string> }) {
             ))}
           </div>
           <span className="text-center">
-            <span className="font-bold text-emerald-400">+12.847</span> torcedores já garantiram o acesso
+            <span className="font-bold text-emerald-400">+{fmt(count)}</span> torcedores já garantiram o acesso
           </span>
         </div>
         <div className="mt-2 flex items-center justify-center gap-1 text-yellow-400">
